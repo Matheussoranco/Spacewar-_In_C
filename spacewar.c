@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define SCREEN_WIDTH 800
+#define SCREEN_WIDTH  800
 #define SCREEN_HEIGHT 600
-#define PI 3.141159265
+#define PI 3.14159265
 #define MAX_MISSILES 10
 #define MAX_PARTICLES 50
 
@@ -58,7 +58,7 @@ void init_game() {
 
     ship2 = (Spaceship){
         .x = SCREEN_WIDTH * 0.75,
-        .Y = SCREEN_HEIGHT / 2,
+        .y = SCREEN_HEIGHT / 2,
         .angle = PI,
         .thrust = false,
         .score = 0,
@@ -71,23 +71,23 @@ void init_game() {
         .y = SCREEN_HEIGHT / 2
     };
 
-    for (int i = 0; i < MAX_MISSILES * 2; i++){
+    for (int i = 0; i < MAX_MISSILES * 2; i++) {
         missiles[i] = (Missile){
             .active = false,
             .lifetime = 0
         };
     }
 
-    for (int i = 0; i< MAX_PARTICLES; i++){
+    for (int i = 0; i < MAX_PARTICLES; i++) {
         particles[i] = (Particle){
             .lifetime = 0
         };
     }
 }
 
-void spawn_particle(float x, float y, float vx, float vy){
-    for (int i = 0; i< MAX_PARTICLES; i++){
-        if (particles[i].lifetime <= 0){
+void spawn_particle(float x, float y, float vx, float vy) {
+    for (int i = 0; i < MAX_PARTICLES; i++) {
+        if (particles[i].lifetime <= 0) {
             particles[i] = (Particle){
                 .x = x,
                 .y = y,
@@ -100,10 +100,10 @@ void spawn_particle(float x, float y, float vx, float vy){
     }
 }
 
-void fire_missile(Spaceship *ship, int player_id){
-    for( int i = player_id * MAX_MISSILES; i < (player_id + 1) * MAX_MISSILES; i++) {
+void fire_missile(Spaceship *ship, int player_id) {
+    for (int i = player_id * MAX_MISSILES; i < (player_id + 1) * MAX_MISSILES; i++) {
         if (!missiles[i].active) {
-            missiles[i] = (Missile) {
+            missiles[i] = (Missile){
                 .x = ship->x,
                 .y = ship->y,
                 .vx = ship->vx + cos(ship->angle) * 5,
@@ -117,7 +117,7 @@ void fire_missile(Spaceship *ship, int player_id){
 }
 
 void hyperspace(Spaceship *ship) {
-    if (ship->hyperspace_cooldown <= 0){
+    if (ship->hyperspace_cooldown <= 0) {
         ship->x = rand() % SCREEN_WIDTH;
         ship->y = rand() % SCREEN_HEIGHT;
         ship->vx = 0;
@@ -129,14 +129,16 @@ void hyperspace(Spaceship *ship) {
 void update_ship(Spaceship *ship) {
     if (!ship->alive) return;
 
+    // Gravidade da estrela
     float dx = star.x - ship->x;
     float dy = star.y - ship->y;
-    float dist = sqrt(dx * dx + dy *dy);
+    float dist = sqrt(dx * dx + dy * dy);
     float force = 1000.0f / (dist * dist);
 
     ship->vx += dx / dist * force * 0.01;
     ship->vy += dy / dist * force * 0.01;
 
+    // Propulsão (com partículas)
     if (ship->thrust) {
         ship->vx += cos(ship->angle) * 0.2;
         ship->vy += sin(ship->angle) * 0.2;
@@ -148,22 +150,25 @@ void update_ship(Spaceship *ship) {
         );
     }
 
+    // Atualiza posição
     ship->x += ship->vx;
     ship->y += ship->vy;
 
+    // Wrap-around
     if (ship->x < 0) ship->x = SCREEN_WIDTH;
     if (ship->x > SCREEN_WIDTH) ship->x = 0;
     if (ship->y < 0) ship->y = SCREEN_HEIGHT;
-    if (ship->y < 0) ship->y = ship->y = 0;
+    if (ship->y > SCREEN_HEIGHT) ship->y = 0;
 
+    // Cooldown do hyperspace
     if (ship->hyperspace_cooldown > 0) {
         ship->hyperspace_cooldown--;
     }
 }
 
 void update_missiles() {
-    for(int i =0; i< MAX_MISSILES * 2; i++) {
-        if(missiles[i].active) {
+    for (int i = 0; i < MAX_MISSILES * 2; i++) {
+        if (missiles[i].active) {
             missiles[i].x += missiles[i].vx;
             missiles[i].y += missiles[i].vy;
             missiles[i].lifetime--;
@@ -173,41 +178,37 @@ void update_missiles() {
             if (missiles[i].y < 0) missiles[i].y = SCREEN_HEIGHT;
             if (missiles[i].y > SCREEN_HEIGHT) missiles[i].y = 0;
 
-            if(missiles[i].active) {
+            // Verifica colisão com naves
+            if (missiles[i].active) {
                 Spaceship *target = (i < MAX_MISSILES) ? &ship2 : &ship1;
-
-                if (target->alive){
+                if (target->alive) {
                     float dist = sqrt(
                         pow(missiles[i].x - target->x, 2) +
                         pow(missiles[i].y - target->y, 2)
                     );
-                    if (dist < 15){
+                    if (dist < 15) {
                         target->alive = false;
                         missiles[i].active = false;
-                        if (i< MAX_MISSILES) ship1.SCORE++;
-                        else ship2.score++
+                        if (i < MAX_MISSILES) ship1.score++;
+                        else ship2.score++;
                     }
-                    
                 }
-                
             }
 
-            if (missiles[i].lifetime <= 0){
+            if (missiles[i].lifetime <= 0) {
                 missiles[i].active = false;
             }
-            
         }
     }
 }
 
 void update_particles() {
     for (int i = 0; i < MAX_PARTICLES; i++) {
-        if (particles[i].lifetime > 0){
+        if (particles[i].lifetime > 0) {
             particles[i].x += particles[i].vx;
             particles[i].y += particles[i].vy;
             particles[i].lifetime--;
         }
-        
     }
 }
 
