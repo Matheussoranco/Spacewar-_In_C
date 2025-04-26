@@ -162,5 +162,52 @@ void update_ship(Spaceship *ship) {
 }
 
 void update_missiles() {
-    
+    for(int i =0; i< MAX_MISSILES * 2; i++) {
+        if(missiles[i].active) {
+            missiles[i].x += missiles[i].vx;
+            missiles[i].y += missiles[i].vy;
+            missiles[i].lifetime--;
+
+            if (missiles[i].x < 0) missiles[i].x = SCREEN_WIDTH;
+            if (missiles[i].x > SCREEN_WIDTH) missiles[i].x = 0;
+            if (missiles[i].y < 0) missiles[i].y = SCREEN_HEIGHT;
+            if (missiles[i].y > SCREEN_HEIGHT) missiles[i].y = 0;
+
+            if(missiles[i].active) {
+                Spaceship *target = (i < MAX_MISSILES) ? &ship2 : &ship1;
+
+                if (target->alive){
+                    float dist = sqrt(
+                        pow(missiles[i].x - target->x, 2) +
+                        pow(missiles[i].y - target->y, 2)
+                    );
+                    if (dist < 15){
+                        target->alive = false;
+                        missiles[i].active = false;
+                        if (i< MAX_MISSILES) ship1.SCORE++;
+                        else ship2.score++
+                    }
+                    
+                }
+                
+            }
+
+            if (missiles[i].lifetime <= 0){
+                missiles[i].active = false;
+            }
+            
+        }
+    }
 }
+
+void update_particles() {
+    for (int i = 0; i < MAX_PARTICLES; i++) {
+        if (particles[i].lifetime > 0){
+            particles[i].x += particles[i].vx;
+            particles[i].y += particles[i].vy;
+            particles[i].lifetime--;
+        }
+        
+    }
+}
+
