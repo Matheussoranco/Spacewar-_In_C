@@ -86,6 +86,81 @@ void init_game() {
 }
 
 void spawn_particle(float x, float y, float vx, float vy){
-    
+    for (int i = 0; i< MAX_PARTICLES; i++){
+        if (particles[i].lifetime <= 0){
+            particles[i] = (Particle){
+                .x = x,
+                .y = y,
+                .vx = vx + ((rand() % 100) - 50) * 0.01,
+                .vy = vy + ((rand() % 100) - 50) * 0.01,
+                .lifetime = 20 + (rand() % 30)
+            };
+            break;
+        }
+    }
 }
 
+void fire_missile(Spaceship *ship, int player_id){
+    for( int i = player_id * MAX_MISSILES; i < (player_id + 1) * MAX_MISSILES; i++) {
+        if (!missiles[i].active) {
+            missiles[i] = (Missile) {
+                .x = ship->x,
+                .y = ship->y,
+                .vx = ship->vx + cos(ship->angle) * 5,
+                .vy = ship->vy + sin(ship->angle) * 5,
+                .active = true,
+                .lifetime = 120
+            };
+            break;
+        }
+    }
+}
+
+void hyperspace(Spaceship *ship) {
+    if (ship->hyperspace_cooldown <= 0){
+        ship->x = rand() % SCREEN_WIDTH;
+        ship->y = rand() % SCREEN_HEIGHT;
+        ship->vx = 0;
+        ship->vy = 0;
+        ship->hyperspace_cooldown = 180;
+    }
+}
+
+void update_ship(Spaceship *ship) {
+    if (!ship->alive) return;
+
+    float dx = star.x - ship->x;
+    float dy = star.y - ship->y;
+    float dist = sqrt(dx * dx + dy *dy);
+    float force = 1000.0f / (dist * dist);
+
+    ship->vx += dx / dist * force * 0.01;
+    ship->vy += dy / dist * force * 0.01;
+
+    if (ship->thrust) {
+        ship->vx += cos(ship->angle) * 0.2;
+        ship->vy += sin(ship->angle) * 0.2;
+        spawn_particle(
+            ship->x - cos(ship->angle) * 10,
+            ship->y - sin(ship->angle) * 10,
+            -cos(ship->angle) * 0.5,
+            -sin(ship->angle) * 0.5
+        );
+    }
+
+    ship->x += ship->vx;
+    ship->y += ship->vy;
+
+    if (ship->x < 0) ship->x = SCREEN_WIDTH;
+    if (ship->x > SCREEN_WIDTH) ship->x = 0;
+    if (ship->y < 0) ship->y = SCREEN_HEIGHT;
+    if (ship->y < 0) ship->y = ship->y = 0;
+
+    if (ship->hyperspace_cooldown > 0) {
+        ship->hyperspace_cooldown--;
+    }
+}
+
+void update_missiles() {
+    
+}
