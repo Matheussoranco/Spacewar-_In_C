@@ -42,6 +42,7 @@ Star star;
 Missile missiles[MAX_MISSILES * 2];
 Particle particles[MAX_PARTICLES];
 bool running = true;
+SDL_Window *window;  // Declaração global da janela
 
 void init_game() {
     srand(time(NULL));
@@ -262,7 +263,7 @@ void draw_score(SDL_Renderer *renderer) {
 
 int main(int argc, char *argv[]) {
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_Window *window = SDL_CreateWindow(
+    window = SDL_CreateWindow(
         "Spacewar! (MIT 1962 - C)", 
         SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED, 
