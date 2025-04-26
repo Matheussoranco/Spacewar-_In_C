@@ -211,3 +211,122 @@ void update_particles() {
     }
 }
 
+void draw_ship(SDL_Renderer *renderer, Spaceship *ship) {
+    if (!ship->alive) return;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    float x1 = ship->x + cos(ship->angle) * 10;
+    float y1 = ship->y + sin(ship->angle) * 10;
+    float x2 = ship->x + cos(ship->angle + 2.5) * 7;
+    float y2 = ship->y + sin(ship->angle + 2.5) * 7;
+    float x3 = ship->x + cos(ship->angle - 2.5) * 7;
+    float y3 = ship->y + sin(ship->angle - 2.5) * 7;
+
+    SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+    SDL_RenderDrawLine(renderer, x2, y2, x3, y3);
+    SDL_RenderDrawLine(renderer, x3, y3, x1, y1);
+}
+
+void draw_missiles(SDL_Renderer *renderer) {
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    for (int i = 0; i < MAX_MISSILES * 2; i++) {
+        if (missiles[i].active) {
+            SDL_RenderDrawPoint(renderer, missiles[i].x, missiles[i].y);
+        }
+    }
+}
+
+void draw_particles(SDL_Renderer *renderer) {
+    SDL_SetRenderDrawColor(renderer, 255, 150, 0, 255);
+    for (int i = 0; i < MAX_PARTICLES; i++) {
+        if (particles[i].lifetime > 0) {
+            SDL_RenderDrawPoint(renderer, particles[i].x, particles[i].y);
+        }
+    }
+}
+
+void draw_score(SDL_Renderer *renderer) {
+    char score_text[50];
+    sprintf(score_text, "Jogador 1: %d | Jogador 2: %d", ship1.score, ship2.score);
+
+    SDL_Color white = {255, 255, 255, 255};
+    SDL_Surface *surface = SDL_CreateRGBSurface(0, 300, 30, 32, 0, 0, 0, 0);
+    SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, 0, 0, 0));
+    // Nota: Para texto, você precisaria de SDL_ttf ou desenhar manualmente.
+    // Aqui é um placeholder. Instale SDL_ttf para texto real.
+    SDL_Rect score_rect = {10, 10, 300, 30};
+    SDL_BlitSurface(surface, NULL, SDL_GetWindowSurface(window), &score_rect);
+    SDL_FreeSurface(surface);
+}
+
+int main(int argc, char *argv[]) {
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Window *window = SDL_CreateWindow(
+        "Spacewar! (MIT 1962 - C)", 
+        SDL_WINDOWPOS_CENTERED, 
+        SDL_WINDOWPOS_CENTERED, 
+        SCREEN_WIDTH, 
+        SCREEN_HEIGHT, 
+        0
+    );
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    init_game();
+
+    while (running) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT)
+                running = false;
+
+            const Uint8 *keys = SDL_GetKeyboardState(NULL);
+            
+            ship1.thrust = keys[SDL_SCANCODE_SPACE];
+            if (keys[SDL_SCANCODE_A]) ship1.angle -= 0.05;
+            if (keys[SDL_SCANCODE_D]) ship1.angle += 0.05;
+            if (keys[SDL_SCANCODE_W] && !missiles[0].active) fire_missile(&ship1, 0);
+            if (keys[SDL_SCANCODE_Q]) hyperspace(&ship1);
+
+            ship2.thrust = keys[SDL_SCANCODE_RETURN];
+            if (keys[SDL_SCANCODE_LEFT]) ship2.angle -= 0.05;
+            if (keys[SDL_SCANCODE_RIGHT]) ship2.angle += 0.05;
+            if (keys[SDL_SCANCODE_UP] && !missiles[MAX_MISSILES].active) fire_missile(&ship2, 1);
+            if (keys[SDL_SCANCODE_DOWN]) hyperspace(&ship2);
+        }
+
+        // Atualiza física
+        update_ship(&ship1);
+        update_ship(&ship2);
+        update_missiles();
+        update_particles();
+
+        // Renderização
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+
+        // Estrela
+        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255);
+        SDL_RenderDrawPoint(renderer, star.x, star.y);
+
+        // Partículas
+        draw_particles(renderer);
+
+        // Mísseis
+        draw_missiles(renderer);
+
+        // Naves
+        draw_ship(renderer, &ship1);
+        draw_ship(renderer, &ship2);
+
+        // Pontuação
+        draw_score(renderer);
+
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16);
+    }
+
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 0;
+}
